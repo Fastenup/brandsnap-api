@@ -57,25 +57,39 @@ ${brandAnalysis.cta ? `- CTA Button: "${brandAnalysis.cta}"` : ''}
 
 Typography should be elegant, readable, and integrated into the design.`
   } else {
-    // Fallback if no visualPrompt was generated
-    const colors = brandAnalysis.brandColors.slice(0, 3).join(', ')
+    // Fallback if no visualPrompt was generated - use provided analysis data
     prompt = `Create a professional ${platform} banner for "${brandAnalysis.brandName}".
 
-Brand: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'Technology'}
-What they do: ${brandAnalysis.summary || 'Modern digital service'}
-Slogan: "${brandAnalysis.slogan || 'Innovation for everyone'}"
-CTA: "${brandAnalysis.cta || 'Get Started'}"
-Colors: ${colors || '#3b82f6, #ffffff'}
+**BRAND INFORMATION:**
+- Brand Name: ${brandAnalysis.brandName}
+- Industry: ${brandAnalysis.industry || 'Technology'}
+- What they do: ${brandAnalysis.summary || 'Modern digital service'}
 
-Create a ${style} style banner that:
-- Displays the brand name "${brandAnalysis.brandName}" prominently
-- Shows the slogan "${brandAnalysis.slogan || ''}" as supporting text
-- Uses the brand colors throughout
-- Fills the entire wide landscape canvas
-- Looks like a finished, premium marketing asset
+**EXACT TEXT TO DISPLAY ON THE BANNER (use these exact words):**
+1. Brand Name (large): "${brandAnalysis.brandName}"
+2. Tagline/Slogan: "${brandAnalysis.slogan || ''}"
+3. Call-to-Action button: "${brandAnalysis.cta || 'Get Started'}"
 
-Quality: 8K, highly detailed`
+**STYLE:** ${style}
+
+**DESIGN REQUIREMENTS:**
+- Display ALL three text elements prominently
+- Brand name should be the largest text
+- Slogan should be readable supporting text  
+- CTA should look like a button
+- Wide landscape banner, fill the entire canvas
+- Premium marketing asset quality
+- 8K, highly detailed
+
+**CRITICAL: Do NOT invent new slogans or taglines. Use EXACTLY the text provided above.**`
   }
+  
+  // Log the actual prompt being used
+  console.log(`[Imagen] Prompt for ${platform}:`)
+  console.log(`  Brand: ${brandAnalysis.brandName}`)
+  console.log(`  Slogan: ${brandAnalysis.slogan}`)
+  console.log(`  CTA: ${brandAnalysis.cta}`)
+  console.log(`  visualPrompt provided: ${brandAnalysis.visualPrompt ? 'YES' : 'NO'}`)
 
   const maxRetries = 3
   let lastError: Error | null = null
@@ -154,15 +168,17 @@ Brand: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'Technology'}
 What they do: ${brandAnalysis.summary || 'Digital service'}
 Icon concept: ${brandAnalysis.iconConcept || 'abstract symbol'}
 
-Colors: Primary ${primaryColor}, Secondary ${secondaryColor}
+Use these colors in the design (do NOT display as text): primary color is a teal/green, secondary is dark navy.
 
 Style: ${iconStyles[style] || iconStyles.minimal}
 
 Requirements:
 - Square 1:1 format, works at 16px to 512px
 - SINGLE distinctive symbol representing "${brandAnalysis.brandName}"
-- Can include stylized letter from brand name if appropriate
+- Can include a stylized single letter from brand name if appropriate
 - Strong silhouette, works in monochrome
+- NO text, NO words, NO letters except possibly one stylized initial
+- NO hex codes or color codes visible
 - Centered with ~15% padding
 - Crisp vector-like edges
 - App Store quality

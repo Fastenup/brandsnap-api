@@ -1,5 +1,8 @@
 /**
  * Image Generation Service using Google Imagen 4
+ * 
+ * Approach: Brand assets should convey the brand's identity, niche, and value proposition
+ * through symbolism, composition, and optional text overlays.
  */
 
 import { GoogleGenAI } from '@google/genai'
@@ -15,30 +18,90 @@ const getClient = () => {
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 // Supported aspect ratios: 1:1, 9:16, 16:9, 4:3, 3:4
-// Map platforms to closest supported ratio
 const PLATFORM_ASPECT_RATIO: Record<Platform, string> = {
-  twitter: '16:9',   // Twitter 3:1 → use 16:9, crop later if needed
-  linkedin: '16:9',  // LinkedIn 4:1 → use 16:9
-  youtube: '16:9',   // YouTube 16:9 → exact match
-  facebook: '16:9',  // Facebook 2.6:1 → use 16:9
-  og: '16:9',        // OG 1.9:1 → use 16:9
+  twitter: '16:9',
+  linkedin: '16:9',
+  youtube: '16:9',
+  facebook: '16:9',
+  og: '16:9',
 }
 
-const STYLE_PROMPTS: Record<Style, string> = {
-  blueprint: `Technical blueprint schematic style with dark navy blue background, white/cyan line drawings, circuit patterns, CAD aesthetic, precise geometric shapes. NO photorealism.`,
-  brutalism: `Neo-brutalist design with stark black and white base, bold neon accent, thick black borders, high contrast, geometric blocks, punk zine aesthetic.`,
-  isometric: `Isometric 3D illustration with true isometric perspective, miniature 3D objects, soft shadows, clean vector-like rendering, limited color palette, playful style.`,
-  fluid: `Ethereal glass-morphism with flowing liquid/glass shapes, iridescent gradients, light refractions, dreamy atmosphere, transparent layers, aurora-like colors.`,
-  collage: `Mixed media digital collage with layered paper-cut textures, visible edges, photography fragments, vintage meets modern, tactile handmade feel.`,
-  explainer: `Flat vector illustration with clean minimal shapes, consistent stroke weights, 3-4 harmonious colors, clear hierarchy, SaaS landing page style.`,
-  minimal: `Ultra-minimal design with maximum whitespace, single focal element, monochromatic or 2 colors only, geometric purity, Apple/Muji aesthetic.`,
-  gradient: `Aurora gradient design with smooth flowing gradients, 3-4 colors blending, mesh gradient effect, subtle grain texture, soft edges, Stripe aesthetic.`,
-  geometric: `Geometric pattern design with repeating interlocking shapes, tessellations, bold color blocking, mathematical precision, Bauhaus influence.`,
-  retro: `Retro vintage 70s-80s style with orange/brown/teal/cream palette, halftone dots, sun rays, grain texture, nostalgic warmth, travel poster aesthetic.`,
+// Style-specific visual guides (inspired by Orbator)
+const STYLE_GUIDES: Record<Style, string> = {
+  blueprint: `**STYLE: ORTHOGRAPHIC BLUEPRINT / SCHEMATIC**
+- Full-width technical schematic on dark engineering background (#0a1628)
+- Detailed white/cyan line drawings, grid lines, measurement annotations
+- Show the brand concept as exploded technical diagrams
+- CAD drawing or patent application aesthetic
+- NO photorealism. Precise, Technical, Architectural, Complex.`,
+
+  brutalism: `**STYLE: NEO-BRUTALISM / WEB AESTHETIC**
+- Stark contrast, heavy black borders (4px+ strokes)
+- Raw unpolished look, UI elements, browser windows, retro computer aesthetics
+- High saturation neon colors against stark black/white
+- Glitch artifacts, system fonts used decoratively
+- Raw, Honest, Retro-future, Developer-centric vibe.`,
+
+  isometric: `**STYLE: 3D ISOMETRIC RENDER**
+- Sprawling miniature 3D world or complex machinery
+- Strict 30-degree isometric perspective
+- Soft global illumination, soft shadows, claymorphism/plastic sheen
+- Show brand ecosystem as a 3D city or factory floor
+- Playful, Tech-forward, Gamified, Detailed.`,
+
+  fluid: `**STYLE: ETHEREAL FLUID / ABSTRACT 3D**
+- Liquid gradients, mesh gradients, glassmorphism
+- Flowing abstract shapes suggesting motion and connectivity
+- Deep iridescent colors, high-end gloss finish
+- Futuristic, Premium, AI, Web3, Flowing aesthetic.`,
+
+  collage: `**STYLE: MIXED MEDIA DIGITAL COLLAGE**
+- Edge-to-edge artistic composition
+- Cut-out elements, ripped paper edges, halftone dots, grain textures
+- Vintage imagery juxtaposed with modern tech elements
+- Bold contrasting colors, desaturated photos mixed with vibrant vectors
+- Artsy, Disruptive, Creative, Editorial vibe.`,
+
+  explainer: `**STYLE: FLAT VECTOR / GRAPHIC EXPLAINER**
+- "Corporate Memphis" style high-quality vector art
+- Visual narrative scene spanning the banner width
+- Characters using the product, or abstract service flow representations
+- Pastel background with bold primary accents
+- Friendly, Accessible, SaaS, Startup aesthetic
+- No shading, no gradients, pure flat vector.`,
+
+  minimal: `**STYLE: ULTRA-MINIMAL**
+- Maximum whitespace or single color field
+- One focal element, perfectly placed
+- Monochromatic or 2 colors maximum
+- Geometric purity: circles, lines, squares
+- Apple or Muji aesthetic, sophisticated simplicity.`,
+
+  gradient: `**STYLE: AURORA GRADIENT**
+- Smooth flowing mesh gradients
+- 3-4 colors blending seamlessly with depth
+- Subtle grain texture overlay for organic feel
+- iOS wallpaper or Stripe aesthetic
+- Modern, Premium, Tech-forward.`,
+
+  geometric: `**STYLE: GEOMETRIC PATTERNS**
+- Repeating or interlocking shapes, tessellations
+- Bold color blocking within shapes
+- Mathematical precision, perfect symmetry
+- Op-art or Bauhaus influence
+- Architectural, Data-driven aesthetic.`,
+
+  retro: `**STYLE: RETRO VINTAGE 70s-80s**
+- Orange, brown, teal, cream color palette
+- Halftone dots, sun rays, rounded corners
+- Grain, scratches, aged paper texture
+- Nostalgic warmth, analog feeling
+- Vintage travel poster or record sleeve vibe.`,
 }
 
 /**
  * Generate banner using Imagen 4
+ * Creates brand assets that convey identity through symbolism and composition
  */
 export async function generateBannerWithImagen(
   brandAnalysis: BrandAnalysis,
@@ -47,29 +110,40 @@ export async function generateBannerWithImagen(
 ): Promise<string> {
   const ai = getClient()
   const aspectRatio = PLATFORM_ASPECT_RATIO[platform]
-  const stylePrompt = STYLE_PROMPTS[style] || STYLE_PROMPTS.minimal
+  const styleGuide = STYLE_GUIDES[style] || STYLE_GUIDES.minimal
   const colors = brandAnalysis.brandColors.slice(0, 3).join(', ')
 
-  const prompt = `Create a professional social media banner for "${brandAnalysis.brandName}".
+  // Build a rich, contextual prompt like Orbator
+  const prompt = `Create a professional ${platform} banner/header for "${brandAnalysis.brandName}".
 
-BRAND: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'modern business'}
-DESCRIPTION: ${brandAnalysis.summary || brandAnalysis.slogan || 'Professional brand'}
-COLORS TO USE: ${colors || '#3b82f6, #ffffff'}
+**BRAND CONTEXT:**
+- Brand: ${brandAnalysis.brandName}
+- Industry: ${brandAnalysis.industry || 'Technology'}
+- What they do: ${brandAnalysis.summary || 'Modern digital service'}
+- Tagline: "${brandAnalysis.slogan || 'Innovation for everyone'}"
+- Brand Colors: ${colors || '#3b82f6, #ffffff, #000000'}
 
-VISUAL STYLE: ${stylePrompt}
+${styleGuide}
 
-REQUIREMENTS:
-- Wide landscape banner composition
-- Professional, polished, premium quality
-- Create visual interest across the full width
-- Use the brand colors prominently throughout
-- Abstract or pattern-based design (no literal objects unless style calls for it)
-- Suitable for ${platform} header/banner
+**COMPOSITION REQUIREMENTS:**
+- Full-width landscape banner that fills the entire canvas
+- The art itself should EXPLAIN the brand's niche and value through symbolism
+- Create visual narrative that represents what the brand does
+- Use the brand colors prominently throughout the design
+- Make it look like a finished, professional marketing asset
 
-CRITICAL: 
-- NO text, words, letters, numbers, or logos
-- NO human faces or recognizable people
-- Background/abstract design only`
+**TEXT INTEGRATION:**
+- Include the brand name "${brandAnalysis.brandName}" as elegant typography
+- Optionally include the tagline "${brandAnalysis.slogan || ''}" if it fits the composition
+- Text should be integrated naturally into the design, not overlaid awkwardly
+- Typography style should match the overall aesthetic
+
+**CRITICAL CONSTRAINTS:**
+- NO stock photo look - this should be distinctive art
+- NO generic placeholder imagery
+- The visual should be self-explanatory and represent this specific brand
+- High quality, 8K detail level
+- Must look like a premium, finished advertisement`
 
   const maxRetries = 3
   let lastError: Error | null = null
@@ -122,42 +196,48 @@ export async function generateIconWithImagen(
   const ai = getClient()
   const primaryColor = brandAnalysis.brandColors[0] || '#3b82f6'
   const secondaryColor = brandAnalysis.brandColors[1] || '#ffffff'
-  const stylePrompt = STYLE_PROMPTS[style] || STYLE_PROMPTS.minimal
 
-  // Derive icon concept from brand
-  const iconIdea = brandAnalysis.iconConcept || 
-    (brandAnalysis.industry?.toLowerCase().includes('verification') ? 'abstract checkmark or shield shape' :
-     brandAnalysis.industry?.toLowerCase().includes('finance') ? 'abstract geometric coin or chart shape' :
-     brandAnalysis.industry?.toLowerCase().includes('health') ? 'abstract heart or plus symbol' :
-     brandAnalysis.industry?.toLowerCase().includes('tech') ? 'abstract circuit or node pattern' :
-     brandAnalysis.industry?.toLowerCase().includes('social') ? 'abstract connected dots or speech bubble' :
-     'abstract geometric mark')
+  // Map style to icon aesthetic
+  const iconStyle: Record<Style, string> = {
+    blueprint: 'Technical schematic icon with cyan lines on dark navy, circuit aesthetic',
+    brutalism: 'Bold neo-brutalist icon, heavy black borders, neon accent, raw aesthetic',
+    isometric: 'Isometric 3D icon, soft shadows, claymorphism, playful tech vibe',
+    fluid: 'Ethereal glass icon, iridescent gradients, flowing organic shape',
+    collage: 'Mixed media textured icon, paper-cut layers, artsy creative feel',
+    explainer: 'Flat vector icon, clean minimal shapes, friendly SaaS aesthetic',
+    minimal: 'Ultra-minimal geometric icon, one shape, maximum whitespace',
+    gradient: 'Aurora gradient icon, smooth flowing colors, modern app style',
+    geometric: 'Geometric pattern icon, interlocking shapes, mathematical precision',
+    retro: 'Vintage retro icon, warm 70s colors, halftone texture, nostalgic',
+  }
 
   const prompt = `Create a premium app icon for "${brandAnalysis.brandName}".
 
-BRAND: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'technology'}
-WHAT IT DOES: ${brandAnalysis.summary || 'Modern digital service'}
-ICON CONCEPT: ${iconIdea}
+**BRAND:**
+- Name: ${brandAnalysis.brandName}
+- Industry: ${brandAnalysis.industry || 'Technology'}
+- What they do: ${brandAnalysis.summary || 'Digital service'}
 
-COLORS:
+**COLORS:**
 - Primary: ${primaryColor}
 - Secondary: ${secondaryColor}
 
-STYLE: ${stylePrompt}
+**STYLE:** ${iconStyle[style] || iconStyle.minimal}
 
-REQUIREMENTS:
-- Square 1:1 format, will display at 16px to 512px
-- SINGLE focal symbol - one distinctive mark, not multiple objects  
-- Must pass "squint test" - recognizable when blurry/small
+**REQUIREMENTS:**
+- Square 1:1 format, optimized for 16px to 512px display
+- SINGLE distinctive symbol that represents this brand
 - Strong silhouette that works in monochrome
-- Centered with ~15% padding on all sides
-- Crisp, vector-like edges (not fuzzy or painterly)
+- Centered with ~15% padding
+- Crisp vector-like edges
 - App Store / Google Play quality
+- Could include a stylized letter from the brand name if appropriate
 
-CRITICAL:
-- NO text, words, letters, numbers
+**CRITICAL:**
+- UNIQUE to "${brandAnalysis.brandName}" - not generic
+- Must pass "squint test" - recognizable when small
 - NO generic symbols (gears, lightbulbs, handshakes, globes)
-- UNIQUE to this brand - should be distinctive and memorable`
+- Premium, memorable, distinctive`
 
   const maxRetries = 3
   let lastError: Error | null = null

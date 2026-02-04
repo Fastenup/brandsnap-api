@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: brandsnap-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://brandsnap.io,https://brandsnap.vercel.app
+      - key: NODE_ENV
+        value: production

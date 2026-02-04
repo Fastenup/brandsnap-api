@@ -147,16 +147,11 @@ CRITICAL RULES:
       console.log(`[Imagen] Generating ${platform} banner, attempt ${attempt + 1}`)
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
-        contents: {
-          parts: [{ text: prompt + ` (Variation Seed: ${Date.now()})` }]
-        },
+        model: 'gemini-2.5-flash-image-generation',
+        contents: prompt + ` (Variation Seed: ${Date.now()})`,
         config: {
-          imageConfig: {
-            aspectRatio: config.aspectRatio,
-            imageSize: '4K'
-          }
-        } as any
+          responseModalities: ['Text', 'Image'],
+        }
       })
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {
@@ -316,16 +311,11 @@ TECHNICAL QUALITY:
       console.log(`[Imagen] Generating favicon, attempt ${attempt + 1}`)
       
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
-        contents: {
-          parts: [{ text: prompt + ` (Variation Seed: ${Date.now()})` }]
-        },
+        model: 'gemini-2.5-flash-image-generation',
+        contents: prompt + ` (Variation Seed: ${Date.now()})`,
         config: {
-          imageConfig: {
-            aspectRatio: '1:1',
-            imageSize: '4K'
-          }
-        } as any
+          responseModalities: ['Text', 'Image'],
+        }
       })
 
       for (const part of response.candidates?.[0]?.content?.parts || []) {

@@ -147,7 +147,7 @@ CRITICAL RULES:
       console.log(`[Imagen] Generating ${platform} banner, attempt ${attempt + 1}`)
       
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-generation',
+        model: 'gemini-2.5-flash-image',
         contents: prompt + ` (Variation Seed: ${Date.now()})`,
         config: {
           responseModalities: ['Text', 'Image'],
@@ -311,7 +311,7 @@ TECHNICAL QUALITY:
       console.log(`[Imagen] Generating favicon, attempt ${attempt + 1}`)
       
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image-generation',
+        model: 'gemini-2.5-flash-image',
         contents: prompt + ` (Variation Seed: ${Date.now()})`,
         config: {
           responseModalities: ['Text', 'Image'],

@@ -118,7 +118,7 @@ export async function analyzeBrand(
    - Extract the specific product offering, value proposition, and brand vibe
    - If limited results, infer from URL structure and naming patterns
 `
-    tools = [{ googleSearch: {} }]
+    tools = [{ google_search_retrieval: {} }]
   } else {
     researchInstructions = `
 **Task**: Analyze the brand based on this description: "${input}"

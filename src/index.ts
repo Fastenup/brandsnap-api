@@ -147,10 +147,14 @@ app.post('/api/generate', async (req, res) => {
       assets,
       brandAnalysis: {
         brandName: brandAnalysis.brandName,
+        summary: brandAnalysis.summary,
         industry: brandAnalysis.industry,
         vibe: brandAnalysis.vibe,
+        slogan: brandAnalysis.slogan,
+        cta: brandAnalysis.cta,
         brandColors: brandAnalysis.brandColors,
         iconConcept: brandAnalysis.iconConcept,
+        visualPrompt: brandAnalysis.visualPrompt,
       },
     })
   } catch (error: any) {

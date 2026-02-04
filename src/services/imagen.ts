@@ -39,26 +39,10 @@ export async function generateBannerWithImagen(
   const ai = getClient()
   const aspectRatio = PLATFORM_RATIOS[platform]
 
-  // Use the visualPrompt from analysis, or build a fallback
-  let prompt: string
-  
-  if (brandAnalysis.visualPrompt && brandAnalysis.visualPrompt.length > 50) {
-    // Use the Creative Director's custom prompt, enhanced for this platform
-    prompt = `${brandAnalysis.visualPrompt}
-
-**Platform**: ${platform} banner (${aspectRatio} aspect ratio)
-**Format**: Wide landscape, fill entire canvas
-**Quality**: 8K, highly detailed, professional marketing asset
-
-**REQUIRED TEXT ELEMENTS** (display exactly as written):
-- Brand Name: "${brandAnalysis.brandName}"
-- Slogan/Tagline: "${brandAnalysis.slogan || ''}"
-${brandAnalysis.cta ? `- CTA Button: "${brandAnalysis.cta}"` : ''}
-
-Typography should be elegant, readable, and integrated into the design.`
-  } else {
-    // Fallback if no visualPrompt was generated - use provided analysis data
-    prompt = `Create a professional ${platform} banner for "${brandAnalysis.brandName}".
+  // Always use our text-focused prompt
+  // NOTE: We ignore brandAnalysis.visualPrompt because it's designed for abstract 
+  // backgrounds without text. Brand assets need actual text (slogan, CTA, etc.)
+  const prompt = `Create a professional ${platform} banner for "${brandAnalysis.brandName}".
 
 **BRAND INFORMATION:**
 - Brand Name: ${brandAnalysis.brandName}
@@ -82,7 +66,6 @@ Typography should be elegant, readable, and integrated into the design.`
 - 8K, highly detailed
 
 **CRITICAL: Do NOT invent new slogans or taglines. Use EXACTLY the text provided above.**`
-  }
   
   // Log the actual prompt being used
   console.log(`[Imagen] Prompt for ${platform}:`)

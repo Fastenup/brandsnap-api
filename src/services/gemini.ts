@@ -175,10 +175,25 @@ Return ONLY a valid JSON object:
     })
 
     const text = response.text || '{}'
-    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/\{[\s\S]*\}/)
-    const jsonStr = jsonMatch ? jsonMatch[0].replace(/```json|```/g, '') : text
+    console.log('[Gemini] Raw response length:', text.length)
+    console.log('[Gemini] Raw response preview:', text.slice(0, 500))
+    
+    // More flexible JSON extraction - handle various markdown formats
+    let jsonStr = text
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/)
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1]
+    } else {
+      const jsonObjMatch = text.match(/\{[\s\S]*\}/)
+      if (jsonObjMatch) {
+        jsonStr = jsonObjMatch[0]
+      }
+    }
+    
+    console.log('[Gemini] Parsed JSON preview:', jsonStr.slice(0, 300))
 
     const data = JSON.parse(jsonStr)
+    console.log('[Gemini] Brand:', data.brandName, '| visualPrompt length:', data.visualPrompt?.length || 0)
 
     return {
       brandName: data.brandName || 'Brand',

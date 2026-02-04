@@ -186,16 +186,75 @@ CRITICAL RULES:
 }
 
 const ICON_STYLE_PROMPTS: Record<Style, string> = {
-  blueprint: `Technical blueprint style icon: Dark navy background, cyan/white geometric line art, circuit aesthetic`,
-  brutalism: `Neo-brutalist icon: High contrast black/white with neon accent, thick bold strokes, raw geometric shape`,
-  isometric: `Isometric 3D icon: Single isometric object or cube, soft shadows, clean 3D render style`,
-  fluid: `Glass-morphism fluid icon: Flowing organic glass-like shape, iridescent gradient fill, ethereal glow`,
-  collage: `Mixed media collage icon: Layered paper-cut aesthetic, 2-3 overlapping textured shapes`,
-  explainer: `Flat vector icon: Clean minimal vector shape, consistent stroke weight, 2 colors maximum`,
-  minimal: `Ultra-minimal icon: Single pure geometric form, maximum negative space, monochromatic`,
-  gradient: `Aurora gradient icon: Smooth flowing color gradient fill, soft rounded shape, iOS aesthetic`,
-  geometric: `Geometric pattern icon: Interlocking geometric shapes, bold color blocking, Bauhaus influenced`,
-  retro: `Retro vintage icon: Warm 70s-80s color palette, rounded badge or emblem shape, subtle grain`,
+  blueprint: `Technical blueprint style app icon:
+- Deep navy blue background (#0a1628)
+- Single geometric symbol in cyan (#00ffff) or white line art
+- Circuit board or schematic aesthetic
+- Crisp technical precision, engineer's drawing quality
+- Glowing edges on the symbol`,
+
+  brutalism: `Neo-brutalist app icon:
+- Pure black or white background
+- One bold geometric shape with thick black outline (4px+)
+- Single neon accent color (lime, magenta, or cyan)
+- Raw, aggressive, anti-corporate aesthetic
+- Intentionally imperfect but striking`,
+
+  isometric: `Isometric 3D app icon:
+- Single isometric cube, object, or abstract 3D shape
+- Soft ambient shadows, clay/plastic render style
+- 3-4 harmonious colors only
+- Playful and modern like Notion or Slack icons
+- Clean vector 3D look, not photorealistic`,
+
+  fluid: `Glass-morphism app icon:
+- Flowing organic glass or liquid shape
+- Iridescent gradient with light refraction
+- Soft ethereal glow, premium gemstone quality
+- Translucent layers with depth
+- Aurora-like color shifts`,
+
+  collage: `Mixed media collage app icon:
+- 2-3 layered paper-cut shapes with visible edges
+- Textured surfaces (paper grain, fabric)
+- Vintage meets modern aesthetic
+- Warm tactile handcraft feel
+- Slight shadow between layers`,
+
+  explainer: `Flat vector app icon:
+- Single clean geometric shape or simple illustration
+- Consistent 2-3px stroke weight
+- Maximum 2 solid colors
+- Friendly, approachable, corporate SaaS style
+- Perfect for small sizes`,
+
+  minimal: `Ultra-minimal app icon:
+- Single pure geometric form (circle, square, triangle, or abstract)
+- Maximum negative space
+- Monochrome or 2 colors maximum
+- Apple/Muji level simplicity
+- Perfect symmetry or intentional golden ratio`,
+
+  gradient: `Aurora gradient app icon:
+- Rounded square or circle shape
+- Smooth mesh gradient fill (2-3 colors blending)
+- iOS/macOS Big Sur aesthetic
+- Soft, modern, premium feel
+- Subtle inner glow or depth`,
+
+  geometric: `Geometric pattern app icon:
+- Interlocking geometric shapes or tessellation
+- Bold color blocking within shapes
+- Mathematical precision, perfect symmetry
+- Bauhaus or sacred geometry influence
+- Works as single color silhouette`,
+
+  retro: `Retro vintage app icon:
+- Warm 70s-80s palette (orange, brown, teal, cream)
+- Rounded badge, emblem, or sun-ray shape
+- Subtle halftone dots or grain texture
+- Nostalgic warmth, record sleeve aesthetic
+- Thick rounded corners`,
 }
 
 /**
@@ -211,33 +270,43 @@ export async function generateIconWithImagen(
   const concept = brandAnalysis.iconConcept || 'abstract geometric symbol'
   const stylePrompt = ICON_STYLE_PROMPTS[style] || ICON_STYLE_PROMPTS.minimal
 
-  const prompt = `Create a high-quality app icon / favicon for "${brandAnalysis.brandName}".
+  // Derive a meaningful icon concept from the brand
+  const iconIdea = brandAnalysis.iconConcept || 
+    (brandAnalysis.industry?.toLowerCase().includes('verification') ? 'checkmark shield' :
+     brandAnalysis.industry?.toLowerCase().includes('finance') ? 'abstract coin or chart' :
+     brandAnalysis.industry?.toLowerCase().includes('health') ? 'heart or plus symbol' :
+     brandAnalysis.industry?.toLowerCase().includes('tech') ? 'abstract circuit or node' :
+     brandAnalysis.industry?.toLowerCase().includes('social') ? 'connected dots or speech' :
+     'abstract geometric mark')
 
-BRAND CONTEXT:
-- Brand: ${brandAnalysis.brandName}
-- Industry: ${brandAnalysis.industry || 'technology'}
-- Visual concept: ${concept}
-- Primary color: ${primaryColor}
-- Secondary color: ${secondaryColor}
+  const prompt = `Create a PREMIUM app icon for "${brandAnalysis.brandName}" - a ${brandAnalysis.industry || 'technology'} brand.
 
-STYLE:
+WHAT THIS BRAND DOES: ${brandAnalysis.summary || 'Modern digital service'}
+
+ICON CONCEPT: Design a symbol that represents "${iconIdea}" - but make it UNIQUE and MEMORABLE, not generic.
+
+BRAND COLORS (use these):
+- Primary: ${primaryColor}
+- Secondary: ${secondaryColor}
+
+VISUAL STYLE:
 ${stylePrompt}
 
-CRITICAL REQUIREMENTS:
-- Square format (1:1 aspect ratio)
-- Must be recognizable at 32x32 pixels
-- Single iconic symbol or mark
-- Use the brand colors prominently
-- Strong silhouette that works in monochrome
-- Centered with balanced padding
-- NO text, letters, numbers, or words
-- NO generic icons (no gears, lightbulbs, chat bubbles)
-- Create a UNIQUE symbol for this specific brand
+ABSOLUTE REQUIREMENTS:
+1. Square 1:1 format, will display at 16px to 512px
+2. SINGLE focal element - one symbol, not multiple objects
+3. Must pass the "squint test" - recognizable when blurry
+4. Strong silhouette that works in pure black
+5. Centered with ~15% padding on all sides
+6. NO text, NO letters, NO numbers, NO words
+7. NO generic symbols (no gears, lightbulbs, handshakes, globes, chat bubbles)
+8. UNIQUE to this specific brand - would be recognized as "${brandAnalysis.brandName}"
 
-QUALITY:
-- High resolution, crisp edges
-- Professional app store quality
-- Memorable and distinctive`
+TECHNICAL QUALITY:
+- Crisp vector-like edges (not fuzzy or painterly)  
+- Professional App Store / Google Play quality
+- Would look perfect on iPhone home screen
+- High contrast for visibility at small sizes`
 
   const maxRetries = 3
   let lastError: Error | null = null

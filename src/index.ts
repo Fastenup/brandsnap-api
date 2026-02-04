@@ -9,22 +9,30 @@ import { PLATFORM_DIMENSIONS } from './types'
 const app = express()
 const PORT = process.env.PORT || 3001
 
-// CORS configuration
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
-  .split(',')
-  .map(s => s.trim())
+// CORS configuration - allow brandsnap.io and www.brandsnap.io
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001', 
+  'https://brandsnap.io',
+  'https://www.brandsnap.io',
+  ...(process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean)
+]
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) return callback(null, true)
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
+    // Check if origin matches any allowed origin
+    if (allowedOrigins.some(allowed => origin === allowed || origin.startsWith(allowed))) {
       return callback(null, true)
     }
-    return callback(new Error('Not allowed by CORS'))
+    // Log rejected origins for debugging
+    console.log(`[CORS] Rejected origin: ${origin}`)
+    return callback(null, false)
   },
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }))
 
 app.use(express.json({ limit: '10mb' }))

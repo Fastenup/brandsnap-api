@@ -145,22 +145,24 @@ ${researchInstructions}
    ${styleGuide}
    - ${colorInstruction}
    - **CRITICAL**: The visual art must EXPLAIN the brand's niche and value proposition through symbolism and composition
-   - Include the brand name as elegant typography integrated into the design
-   - Include the tagline/slogan if it fits naturally
+   - **IMPORTANT**: The visualPrompt MUST include:
+     * The EXACT brand name as prominent typography
+     * The EXACT slogan/tagline you create (do NOT shorten or paraphrase)
+     * A brief value proposition text (1 line)
    - Fill the entire canvas - this is a wide landscape banner
 
 Return ONLY a valid JSON object:
 {
   "brandName": "The brand/company name",
-  "summary": "One sentence describing what this brand does",
+  "summary": "2-3 sentence description of what this brand does, their value proposition, and target audience",
   "industry": "Specific industry (e.g., 'B2B SaaS', 'DTC Skincare', 'Social Media')",
   "vibe": "3-4 words describing visual personality",
-  "slogan": "A punchy marketing tagline (max 5-6 words)",
-  "cta": "Short Call to Action",
-  "title": "The page title or main headline",
+  "slogan": "The EXACT marketing tagline to display on the banner (5-8 words max)",
+  "cta": "Short Call to Action button text",
+  "title": "The page title or main headline found on site",
   "brandColors": ["#hex1", "#hex2", "#hex3", "#hex4"],
   "iconConcept": "One concept that could represent this brand as an icon",
-  "visualPrompt": "DETAILED image generation prompt that combines brand identity + style guide. Describe the exact scene, composition, colors, typography placement, and symbolic elements. This should be a complete, ready-to-use prompt for image generation.",
+  "visualPrompt": "DETAILED image generation prompt. MUST include: 1) Exact brand name placement, 2) The EXACT slogan text, 3) Style-specific visual elements, 4) Color usage, 5) Composition details. Do NOT create a new tagline - use the slogan field exactly.",
   "twitterBio": "160-char Twitter bio with hashtags/emojis",
   "linkedinHeadline": "Professional LinkedIn headline under 100 chars"
 }`

@@ -49,7 +49,13 @@ export async function generateBannerWithImagen(
 **Platform**: ${platform} banner (${aspectRatio} aspect ratio)
 **Format**: Wide landscape, fill entire canvas
 **Quality**: 8K, highly detailed, professional marketing asset
-**Typography**: Include "${brandAnalysis.brandName}" as elegant text integrated into design`
+
+**REQUIRED TEXT ELEMENTS** (display exactly as written):
+- Brand Name: "${brandAnalysis.brandName}"
+- Slogan/Tagline: "${brandAnalysis.slogan || ''}"
+${brandAnalysis.cta ? `- CTA Button: "${brandAnalysis.cta}"` : ''}
+
+Typography should be elegant, readable, and integrated into the design.`
   } else {
     // Fallback if no visualPrompt was generated
     const colors = brandAnalysis.brandColors.slice(0, 3).join(', ')

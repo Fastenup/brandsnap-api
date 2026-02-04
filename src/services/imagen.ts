@@ -1,8 +1,9 @@
 /**
- * Image Generation Service using Google Imagen 4
+ * Image Generation Service
  * 
- * Uses the visualPrompt from brand analysis (created by Gemini "Creative Director")
- * to render the actual banner images.
+ * Uses:
+ * - Gemini 3 Pro Image for banners (supports custom aspect ratios)
+ * - Imagen 4 for favicons (1:1 square)
  */
 
 import { GoogleGenAI } from '@google/genai'
@@ -17,19 +18,18 @@ const getClient = () => {
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
-// Supported aspect ratios: 1:1, 9:16, 16:9, 4:3, 3:4
-const PLATFORM_ASPECT_RATIO: Record<Platform, string> = {
-  twitter: '16:9',
-  linkedin: '16:9',
-  youtube: '16:9',
-  facebook: '16:9',
-  og: '16:9',
+// Platform-specific aspect ratios
+const PLATFORM_RATIOS: Record<Platform, string> = {
+  twitter: '3:1',    // 1500×500
+  linkedin: '4:1',   // 1584×396
+  youtube: '16:9',   // 2560×1440
+  facebook: '8:3',   // 820×312 ≈ 2.6:1, closest common ratio
+  og: '1200:630',    // OG images are 1200×630
 }
 
 /**
- * Generate banner using Imagen 4
- * 
- * Uses the visualPrompt from brand analysis, enhanced with platform-specific details
+ * Generate banner using Gemini 3 Pro Image
+ * Supports custom aspect ratios for each platform
  */
 export async function generateBannerWithImagen(
   brandAnalysis: BrandAnalysis,
@@ -37,7 +37,7 @@ export async function generateBannerWithImagen(
   style: Style
 ): Promise<string> {
   const ai = getClient()
-  const aspectRatio = PLATFORM_ASPECT_RATIO[platform]
+  const aspectRatio = PLATFORM_RATIOS[platform]
 
   // Use the visualPrompt from analysis, or build a fallback
   let prompt: string
@@ -63,12 +63,13 @@ Typography should be elegant, readable, and integrated into the design.`
 
 Brand: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'Technology'}
 What they do: ${brandAnalysis.summary || 'Modern digital service'}
-Tagline: "${brandAnalysis.slogan || 'Innovation for everyone'}"
+Slogan: "${brandAnalysis.slogan || 'Innovation for everyone'}"
+CTA: "${brandAnalysis.cta || 'Get Started'}"
 Colors: ${colors || '#3b82f6, #ffffff'}
 
 Create a ${style} style banner that:
-- Explains the brand's value through visual symbolism
-- Includes the brand name "${brandAnalysis.brandName}" as elegant typography
+- Displays the brand name "${brandAnalysis.brandName}" prominently
+- Shows the slogan "${brandAnalysis.slogan || ''}" as supporting text
 - Uses the brand colors throughout
 - Fills the entire wide landscape canvas
 - Looks like a finished, premium marketing asset
@@ -83,19 +84,24 @@ Quality: 8K, highly detailed`
     try {
       console.log(`[Imagen] Generating ${platform} banner (${aspectRatio}), attempt ${attempt + 1}`)
       
-      const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt: prompt,
+      // Use Gemini 3 Pro Image for custom aspect ratios
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: prompt + ` (Variation Seed: ${Date.now()})`,
         config: {
-          aspectRatio: aspectRatio,
-          numberOfImages: 1,
-        }
+          responseModalities: ['Image'],
+          imageConfig: {
+            aspectRatio: aspectRatio,
+            imageSize: '4K'
+          }
+        } as any
       })
 
-      const imageData = response.generatedImages?.[0]?.image?.imageBytes
-      if (imageData) {
-        console.log(`[Imagen] Successfully generated ${platform} banner`)
-        return `data:image/png;base64,${imageData}`
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if ((part as any).inlineData) {
+          console.log(`[Imagen] Successfully generated ${platform} banner`)
+          return `data:image/png;base64,${(part as any).inlineData.data}`
+        }
       }
       
       throw new Error('No image data in response')
@@ -118,7 +124,7 @@ Quality: 8K, highly detailed`
 }
 
 /**
- * Generate favicon/icon using Imagen 4
+ * Generate favicon/icon using Imagen 4 (better for 1:1 icons)
  */
 export async function generateIconWithImagen(
   brandAnalysis: BrandAnalysis,
@@ -170,6 +176,7 @@ Critical: UNIQUE to this brand, not generic. Memorable and distinctive.`
     try {
       console.log(`[Imagen] Generating favicon, attempt ${attempt + 1}`)
       
+      // Use Imagen 4 for 1:1 icons
       const response = await ai.models.generateImages({
         model: 'imagen-4.0-generate-001',
         prompt: prompt,

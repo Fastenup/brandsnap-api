@@ -3,7 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { analyzeBrand } from './services/gemini'
 import { generateBannerWithImagen, generateIconWithImagen } from './services/imagen'
-import type { GenerationRequest, GeneratedAsset, Platform, Style } from './types'
+import type { GenerationRequest, GeneratedAsset, Platform, Style, BrandAnalysis } from './types'
 import { PLATFORM_DIMENSIONS } from './types'
 
 const app = express()
@@ -56,13 +56,13 @@ app.post('/api/generate', async (req, res) => {
   const startTime = Date.now()
   
   try {
-    const body: GenerationRequest = req.body
-    const { url, description, platforms, style, customColors, includeFavicon } = body
+    const body: GenerationRequest & { brandAnalysis?: BrandAnalysis } = req.body
+    const { url, description, platforms, style, customColors, includeFavicon, brandAnalysis: providedAnalysis } = body
 
-    if (!url && !description) {
+    if (!url && !description && !providedAnalysis) {
       return res.status(400).json({
         success: false,
-        error: 'URL or description required'
+        error: 'URL, description, or brandAnalysis required'
       })
     }
 
@@ -73,20 +73,29 @@ app.post('/api/generate', async (req, res) => {
       })
     }
 
-    // Step 1: Analyze the brand using Gemini
-    const inputType = url ? 'url' : 'text'
-    const input = url || description || ''
+    // Step 1: Use provided analysis OR analyze the brand using Gemini
+    let brandAnalysis: BrandAnalysis
     
-    console.log(`[Generate] Analyzing brand: ${input}`)
+    if (providedAnalysis && providedAnalysis.brandName) {
+      // Use pre-analyzed data (saves a Gemini API call!)
+      console.log(`[Generate] Using provided analysis for: ${providedAnalysis.brandName}`)
+      brandAnalysis = providedAnalysis
+    } else {
+      // Analyze with Gemini
+      const inputType = url ? 'url' : 'text'
+      const input = url || description || ''
+      
+      console.log(`[Generate] Analyzing brand: ${input}`)
+      
+      brandAnalysis = await analyzeBrand(
+        input,
+        inputType,
+        style as Style,
+        customColors?.join(', ')
+      )
+    }
     
-    const brandAnalysis = await analyzeBrand(
-      input,
-      inputType,
-      style as Style,
-      customColors?.join(', ')
-    )
-    
-    console.log(`[Generate] Brand analysis complete: ${brandAnalysis.brandName}`)
+    console.log(`[Generate] Brand: ${brandAnalysis.brandName}`)
 
     // Step 2: Generate images
     const assets: GeneratedAsset[] = []

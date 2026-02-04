@@ -167,16 +167,22 @@ Return ONLY a valid JSON object:
   "linkedinHeadline": "Professional LinkedIn headline under 100 chars"
 }`
 
-  try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        tools: tools,
-      },
-    })
+  const maxRetries = 3
+  let lastError: Error | null = null
 
-    const text = response.text || '{}'
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`[Gemini] Analyzing brand, attempt ${attempt + 1}`)
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          tools: tools,
+        },
+      })
+
+      const text = response.text || '{}'
     console.log('[Gemini] Raw response length:', text.length)
     console.log('[Gemini] Raw response preview:', text.slice(0, 500))
     
@@ -197,22 +203,35 @@ Return ONLY a valid JSON object:
     const data = JSON.parse(jsonStr)
     console.log('[Gemini] Brand:', data.brandName, '| visualPrompt length:', data.visualPrompt?.length || 0)
 
-    return {
-      brandName: data.brandName || 'Brand',
-      summary: data.summary || 'Modern digital service',
-      industry: data.industry || 'Technology',
-      vibe: data.vibe || 'Modern, Professional',
-      slogan: data.slogan || 'Innovation for everyone',
-      cta: data.cta || 'Get Started',
-      title: data.title || data.brandName || 'Brand',
-      brandColors: data.brandColors || ['#3b82f6', '#ffffff', '#000000'],
-      iconConcept: data.iconConcept || 'abstract symbol',
-      visualPrompt: data.visualPrompt || '',
-      twitterBio: data.twitterBio || '',
-      linkedinHeadline: data.linkedinHeadline || '',
+      return {
+        brandName: data.brandName || 'Brand',
+        summary: data.summary || 'Modern digital service',
+        industry: data.industry || 'Technology',
+        vibe: data.vibe || 'Modern, Professional',
+        slogan: data.slogan || 'Innovation for everyone',
+        cta: data.cta || 'Get Started',
+        title: data.title || data.brandName || 'Brand',
+        brandColors: data.brandColors || ['#3b82f6', '#ffffff', '#000000'],
+        iconConcept: data.iconConcept || 'abstract symbol',
+        visualPrompt: data.visualPrompt || '',
+        twitterBio: data.twitterBio || '',
+        linkedinHeadline: data.linkedinHeadline || '',
+      }
+    } catch (error: any) {
+      lastError = error
+      console.error(`[Gemini] Attempt ${attempt + 1} failed:`, error.message)
+      
+      // Retry on rate limits (429) or server errors (503)
+      if (error.status === 429 || error.status === 503 || error.message?.includes('429') || error.message?.includes('overloaded')) {
+        const waitTime = Math.pow(2, attempt + 1) * 3000 // 6s, 12s, 24s
+        console.log(`[Gemini] Rate limited, waiting ${waitTime}ms before retry...`)
+        await new Promise(r => setTimeout(r, waitTime))
+        continue
+      }
+      break
     }
-  } catch (error: any) {
-    console.error('[Gemini] Analysis error:', error.message)
-    throw new Error('Failed to analyze brand. Please try again.')
   }
+  
+  console.error('[Gemini] All attempts failed')
+  throw lastError || new Error('Failed to analyze brand. Please try again.')
 }

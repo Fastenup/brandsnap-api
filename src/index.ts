@@ -2,7 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { analyzeBrand } from './services/gemini'
-import { generateBannerWithImagen, generateIconWithImagen } from './services/imagen'
+import { generateBannerWithImagen, generateIconWithImagen, generateLogoWithImagen } from './services/imagen'
 import type { GenerationRequest, GeneratedAsset, Platform, Style, BrandAnalysis } from './types'
 import { PLATFORM_DIMENSIONS } from './types'
 
@@ -100,11 +100,12 @@ app.post('/api/generate', async (req, res) => {
     // Step 2: Generate images
     const assets: GeneratedAsset[] = []
     
-    // Separate favicon from banner platforms
-    const bannerPlatforms = platforms.filter(p => p !== 'favicon') as Platform[]
-    const needsFavicon = platforms.includes('favicon' as Platform) || includeFavicon
+    // Separate favicon and logo from banner platforms
+    const bannerPlatforms = platforms.filter(p => p !== 'favicon' && p !== 'logo') as Platform[]
+    const needsFavicon = platforms.includes('favicon' as any) || includeFavicon
+    const needsLogo = platforms.includes('logo' as any)
     
-    console.log(`[Generate] Platforms: ${bannerPlatforms.join(', ')}, Favicon: ${needsFavicon}`)
+    console.log(`[Generate] Platforms: ${bannerPlatforms.join(', ')}, Favicon: ${needsFavicon}, Logo: ${needsLogo}`)
     
     // Helper to add delay
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms))
@@ -138,6 +139,22 @@ app.post('/api/generate', async (req, res) => {
         })
       } catch (err: any) {
         console.error(`[Generate] Failed to generate favicon:`, err.message)
+      }
+    }
+    
+    // Generate logo
+    if (needsLogo) {
+      try {
+        await wait(STAGGER_MS)
+        const base64 = await generateLogoWithImagen(brandAnalysis, style as Style)
+        console.log(`[Generate] logo complete`)
+        assets.push({ 
+          platform: 'logo', 
+          dimensions: { width: 1024, height: 1024 }, 
+          base64 
+        })
+      } catch (err: any) {
+        console.error(`[Generate] Failed to generate logo:`, err.message)
       }
     }
 

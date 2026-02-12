@@ -121,6 +121,113 @@ export async function generateBannerWithImagen(
 }
 
 /**
+ * Generate professional logo using Gemini 3 Pro Image
+ * Unlike favicon (icon-only, no text), logos include the brand name as text
+ * combined with a symbol/mark for a complete logo design.
+ */
+export async function generateLogoWithImagen(
+  brandAnalysis: BrandAnalysis,
+  style: Style
+): Promise<string> {
+  const ai = getClient()
+  const primaryColor = brandAnalysis.brandColors[0] || '#3b82f6'
+  const secondaryColor = brandAnalysis.brandColors[1] || '#ffffff'
+
+  // Map style to logo design aesthetic
+  const logoStyles: Record<Style, string> = {
+    blueprint: 'Technical, precise logo with thin lines, dark navy background, cyan accents, engineering/architect feel',
+    brutalism: 'Bold neo-brutalist logo, heavy black strokes, stark contrast, raw geometric letterforms, punk energy',
+    isometric: 'Isometric 3D logo mark with clean lettering, soft shadows, playful modern tech aesthetic',
+    fluid: 'Ethereal glass-morphism logo, iridescent gradient mark, elegant thin typography, premium luxury feel',
+    collage: 'Mixed media textured logo, layered paper-cut mark, artistic handcraft quality, creative agency vibe',
+    explainer: 'Clean flat vector logo, friendly sans-serif type, minimal symbol, approachable SaaS aesthetic',
+    minimal: 'Ultra-minimal logo, geometric monogram or wordmark, maximum whitespace, refined elegance',
+    gradient: 'Aurora gradient logo mark with clean modern type, smooth flowing colors, fintech/app aesthetic',
+    geometric: 'Geometric pattern-based logo mark, interlocking shapes, mathematical precision, bold type',
+    retro: 'Vintage retro logo, warm 70s-80s palette, rounded badge style, nostalgic hand-lettered feel',
+  }
+
+  const prompt = `Design a professional brand logo for "${brandAnalysis.brandName}".
+
+**BRAND CONTEXT:**
+- Brand Name: ${brandAnalysis.brandName}
+- Industry: ${brandAnalysis.industry || 'Technology'}
+- What they do: ${brandAnalysis.summary || 'Modern digital service'}
+- Icon concept: ${brandAnalysis.iconConcept || 'abstract symbol representing the brand'}
+
+**LOGO REQUIREMENTS:**
+- The brand name "${brandAnalysis.brandName}" MUST appear as text in the logo
+- Combine a distinctive symbol/mark with the brand name text
+- Think combination mark (symbol + wordmark together)
+- Primary color: ${primaryColor}
+- Secondary color: ${secondaryColor}
+- Clean background (solid color or white)
+- Square 1:1 format
+- Must work at small sizes (social media profile pic) and large (website header)
+- Professional, memorable, simple, distinctive
+- Dribbble/Behance portfolio quality
+
+**DESIGN STYLE:** ${logoStyles[style] || logoStyles.minimal}
+
+**CRITICAL RULES:**
+- The brand name "${brandAnalysis.brandName}" MUST be clearly readable as text
+- Do NOT just create an icon — this is a LOGO with text
+- Do NOT add taglines, slogans, or extra text beyond the brand name
+- No stock photo elements, no clip art
+- No busy backgrounds — keep it clean
+- The mark/symbol should be unique to this brand
+- Typography should feel intentional and styled, not default
+
+**QUALITY:**
+- Vector-like crisp edges
+- High resolution
+- Would look professional on a business card, website, or app store`
+
+  const maxRetries = 3
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      console.log(`[Imagen] Generating logo, attempt ${attempt + 1}`)
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: prompt + ` (Variation Seed: ${Date.now()})`,
+        config: {
+          responseModalities: ['Image'],
+          imageConfig: {
+            aspectRatio: '1:1',
+            imageSize: '4K'
+          }
+        } as any
+      })
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        if ((part as any).inlineData) {
+          console.log(`[Imagen] Successfully generated logo`)
+          return `data:image/png;base64,${(part as any).inlineData.data}`
+        }
+      }
+      
+      throw new Error('No image data in response')
+    } catch (error: any) {
+      lastError = error
+      console.error(`[Imagen] Logo attempt ${attempt + 1} failed:`, error.message)
+      
+      if (error.status === 429 || error.status === 503 || error.message?.includes('overloaded')) {
+        const waitTime = Math.pow(2, attempt + 1) * 2000
+        console.log(`[Imagen] Waiting ${waitTime}ms before retry...`)
+        await wait(waitTime)
+        continue
+      }
+      break
+    }
+  }
+  
+  throw lastError || new Error('Logo generation failed after retries')
+}
+
+/**
  * Generate favicon/icon using Imagen 4 (better for 1:1 icons)
  */
 export async function generateIconWithImagen(

@@ -4,7 +4,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+ENV NODE_ENV=development
 RUN npm ci
+ENV NODE_ENV=production
 
 # ---- Builder ----
 FROM node:20-alpine AS builder

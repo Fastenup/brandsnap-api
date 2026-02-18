@@ -1,0 +1,20 @@
+name: Deploy to Coolify
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify Deploy
+        run: |
+          for UUID in ${{ vars.COOLIFY_APP_UUIDS }}; do
+            echo "Deploying $UUID..."
+            curl -s -X POST \
+              -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              "${{ vars.COOLIFY_URL }}/api/v1/deploy" \
+              -d "{\"uuid\":\"$UUID\"}"
+            echo ""
+          done

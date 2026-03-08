@@ -56,11 +56,14 @@ export async function generateBannerWithImagen(
 
 **STYLE:** ${style}
 
+**BRAND COLORS:** ${brandAnalysis.brandColors && brandAnalysis.brandColors.length > 0 ? `Use these exact colors as the primary palette: ${brandAnalysis.brandColors.join(', ')}` : 'Use colors appropriate for the brand and style'}
+
 **DESIGN REQUIREMENTS:**
 - Display ALL three text elements prominently
 - Brand name should be the largest text
 - Slogan should be readable supporting text  
 - CTA should look like a button
+- Use the specified brand colors throughout the design
 - Wide landscape banner, fill the entire canvas
 - Premium marketing asset quality
 - 8K, highly detailed

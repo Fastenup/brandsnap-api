@@ -80,6 +80,11 @@ app.post('/api/generate', async (req, res) => {
       // Use pre-analyzed data (saves a Gemini API call!)
       console.log(`[Generate] Using provided analysis for: ${providedAnalysis.brandName}`)
       brandAnalysis = providedAnalysis
+      // Merge customColors into brandAnalysis if provided
+      if (customColors && customColors.length > 0) {
+        brandAnalysis.brandColors = customColors
+        console.log(`[Generate] Using custom brand colors: ${customColors.join(', ')}`)
+      }
     } else {
       // Analyze with Gemini
       const inputType = url ? 'url' : 'text'

@@ -255,20 +255,25 @@ export async function generateIconWithImagen(
     retro: 'Vintage retro icon, warm 70s colors, halftone texture, nostalgic',
   }
 
-  const prompt = `Create a premium app icon for "${brandAnalysis.brandName}".
+  const prompt = `Create a premium app icon/favicon for "${brandAnalysis.brandName}".
 
 Brand: ${brandAnalysis.brandName} - ${brandAnalysis.industry || 'Technology'}
 What they do: ${brandAnalysis.summary || 'Digital service'}
 Icon concept: ${brandAnalysis.iconConcept || 'abstract symbol'}
 
-Use these colors in the design (do NOT display as text): primary color is a teal/green, secondary is dark navy.
+**BRAND COLORS (must use these exact colors):**
+- Primary: ${primaryColor}
+- Secondary: ${secondaryColor}
+${brandAnalysis.brandColors.length > 2 ? `- Accent: ${brandAnalysis.brandColors[2]}` : ''}
 
-Style: ${iconStyles[style] || iconStyles.minimal}
+**VISUAL STYLE (must match this aesthetic):** ${iconStyles[style] || iconStyles.minimal}
 
-Requirements:
+**DESIGN REQUIREMENTS:**
 - Square 1:1 format, works at 16px to 512px
 - SINGLE distinctive symbol representing "${brandAnalysis.brandName}"
 - Can include a stylized single letter from brand name if appropriate
+- Use the brand colors ${primaryColor} and ${secondaryColor} as the dominant palette
+- The icon should feel like it belongs to the same brand family as marketing banners in the "${style}" style
 - Strong silhouette, works in monochrome
 - NO text, NO words, NO letters except possibly one stylized initial
 - NO hex codes or color codes visible
@@ -276,7 +281,7 @@ Requirements:
 - Crisp vector-like edges
 - App Store quality
 
-Critical: UNIQUE to this brand, not generic. Memorable and distinctive.`
+Critical: UNIQUE to this brand, not generic. Must use brand colors and match the "${style}" aesthetic.`
 
   const maxRetries = 3
   let lastError: Error | null = null

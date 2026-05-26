@@ -8,6 +8,15 @@ import { PLATFORM_DIMENSIONS } from './types'
 
 const app = express()
 const PORT = process.env.PORT || 3001
+const LEGACY_API_TOKEN = process.env.BRANDSNAP_API_TOKEN
+
+function isAuthorizedLegacyApiRequest(req: express.Request): boolean {
+  if (!LEGACY_API_TOKEN) return false
+  const authHeader = req.header('authorization') || ''
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+  const apiKey = req.header('x-api-key') || ''
+  return bearer === LEGACY_API_TOKEN || apiKey === LEGACY_API_TOKEN
+}
 
 // CORS configuration - allow brandsnap.io and www.brandsnap.io
 const allowedOrigins = [
@@ -53,6 +62,13 @@ app.get('/health', (req, res) => {
 
 // Generate endpoint
 app.post('/api/generate', async (req, res) => {
+  if (!isAuthorizedLegacyApiRequest(req)) {
+    return res.status(410).json({
+      success: false,
+      error: 'Legacy generation API is disabled. Use authenticated generation on brandsnap.io.',
+    })
+  }
+
   const startTime = Date.now()
   
   try {
